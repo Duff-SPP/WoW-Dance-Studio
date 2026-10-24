@@ -6,7 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = {'Input', 'Output', 'Reports', 'Blender', 'Profiles'}
-ALLOWED = {'.py', '.ps1', '.cmd', '.md', '.txt', '.json', '.patch', '.lua', '.toc', '.cs', '.cpp', '.hpp'}
+ALLOWED = {'.py', '.ps1', '.cmd', '.bat', '.md', '.txt', '.json', '.patch', '.lua', '.toc', '.cs', '.cpp', '.hpp'}
 SPECIAL = {'.gitignore', '.gitattributes', '.gitkeep', 'LICENSE'}
 TEMPLATE = 'Profiles/Clients/conservative.example.json'
 

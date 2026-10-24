@@ -50,7 +50,7 @@ def nonempty_reference(value):
         value.get(key) for key in ('AssetPathName', 'ObjectPath', 'ObjectName'))
 
 
-def classify(row):
+def classify(row, allow_non_musical=False):
     reasons, review = [], []
     asset_path = Path(row['AssetJson'])
     asset_bytes = asset_path.read_bytes()
@@ -80,7 +80,7 @@ def classify(row):
     tagged='Cosmetics.UserFacingFlags.Emote.Dance' in tags
     music_pair=all(any("EmoteMusic'" in detail or "EmoteMusic3P'" in detail
                        for detail in v.get('NotifyDetails',[])) for v in variants) and len(variants)==2
-    if not tagged and not music_pair:
+    if not tagged and not music_pair and not allow_non_musical:
         review.append('untagged favorite needs musical-performance review')
     if row['Status'] != 'inspected' or row['Errors']:
         review.extend(row['Errors'] or ['asset inspection incomplete'])
@@ -111,7 +111,7 @@ def classify(row):
         'Status': status, 'Reasons': reasons, 'Review': sorted(set(review)),
         'Tags': sorted(tags), 'PropEvidence': prop_evidence,
         'CoopEvidence': sorted(set(coop_evidence)),
-        'DanceEvidence': 'user-facing tag' if tagged else 'music references in both medium graphs' if music_pair else 'needs review',
+        'DanceEvidence': 'user-facing tag' if tagged else 'music references in both medium graphs' if music_pair else 'standalone body-emote policy' if allow_non_musical else 'needs review',
         'AssetSha256': hashlib.sha256(asset_bytes).hexdigest(),
         'Variants': variants,
     }
@@ -120,19 +120,25 @@ def classify(row):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('report_root', type=Path)
+    parser.add_argument('--allow-non-musical', action='store_true', help='Allow standalone body emotes without dance/music evidence; other safety checks still apply')
     args = parser.parse_args()
     root = args.report_root.resolve()
     audit_path = root / 'audit.json'
     source = audit_path.read_bytes()
     audit = json.loads(source)
-    if len(audit) != 488 or len({r['AssetPath'].lower() for r in audit}) != 488:
-        raise ValueError('Expected a complete audit of 488 unique dance favorites')
-    rows = [classify(row) for row in audit]
+    if not audit or len({r['AssetPath'].casefold() for r in audit}) != len(audit) or len({r['Id'].casefold() for r in audit}) != len(audit):
+        raise ValueError('Expected a nonempty audit with unique asset paths and IDs')
+    source_file = root / 'audit-source.json'
+    source_kind = json.loads(source_file.read_text(encoding='utf-8-sig'))['Source'] if source_file.exists() else 'favorites'
+    if source_kind not in {'catalog','favorites'}:
+        raise ValueError('Unknown audit source')
+    rows = [classify(row,args.allow_non_musical) for row in audit]
     counts = dict(collections.Counter(r['Status'] for r in rows))
     manifest = {
         'SourceRevision': '8058810ece4405bfde931d97c72467b07034a881',
+        'Source': source_kind,
         'AuditSha256': hashlib.sha256(source).hexdigest(),
-        'Policy': 'Dance tag or audited medium-pair music references; no props/co-op; hold unknown behavior',
+        'Policy': ('Standalone body emotes; no music requirement' if args.allow_non_musical else 'Dance tag or audited medium-pair music references')+'; no props/co-op; hold unknown behavior',
         'Counts': counts, 'Items': rows,
     }
     (root / 'selection.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
@@ -145,7 +151,7 @@ def main():
              f'Ready: {counts.get("ready", 0)}. Excluded: {counts.get("excluded", 0)}. Needs review: {counts.get("review", 0)}.', '',
              'Only ready entries are eligible for export. Prop/co-op evidence and uncertainty remain recorded in selection.json.', '',
              'A missing user-facing Dance tag is not an exclusion: audited music references in both medium graphs can establish eligibility.',
-             'No prop spawn was detected across either medium montage and its referenced animation tracks; unfamiliar effects/abilities are held for review.',
+             'Ready entries have no detected prop/co-op evidence across either medium graph; unfamiliar effects/abilities are held for review.',
              'Missing female overrides are held rather than duplicated or replaced with large variants.', '']
     (root / 'RESULTS.md').write_text('\n'.join(lines), encoding='utf-8')
     print(json.dumps(counts))

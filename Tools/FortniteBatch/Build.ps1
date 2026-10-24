@@ -28,7 +28,9 @@ foreach ($group in @(@($references.runtime,$runtime),@($references.libraries,$li
         $arguments += '/reference:"'+$path+'"'
     }
 }
-$arguments += '"'+(Join-Path $PSScriptRoot 'Program.cs')+'"'
+foreach ($source in (Get-ChildItem -LiteralPath $PSScriptRoot -File -Filter '*.cs' | Sort-Object Name)) {
+    $arguments += '"'+$source.FullName+'"'
+}
 $response = Join-Path $output 'compile.rsp'
 [IO.File]::WriteAllLines($response,$arguments,[Text.UTF8Encoding]::new($false))
 & dotnet $Compiler /noconfig ('@'+$response)

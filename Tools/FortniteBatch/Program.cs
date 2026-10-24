@@ -14,6 +14,9 @@ using FortnitePorting.Exporting;
 using FortnitePorting.Exporting.Context;
 using FortnitePorting.Exporting.Types;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using CUE4Parse_Conversion.Options;
+using CUE4Parse_Conversion.Writers.UEFormat.Enums;
 
 [assembly: System.Reflection.AssemblyInformationalVersion("4.3.4")]
 
@@ -23,6 +26,22 @@ internal static class Program
     {
         try
         {
+            var options = BatchOptions.Parse(args);
+            if (options.Help)
+            {
+                Console.WriteLine("Batch <report-folder> <maximum> [--source favorites|catalog] [--catalog-only | --export] [--ids-file file.json] [--destination folder]");
+                Console.WriteLine("Catalog reads the current AthenaDanceItemDefinition registry. No parser starts for --help or --self-test.");
+                return 0;
+            }
+            if (options.SelfTest)
+            {
+                BatchOptions.Test();
+                var tags = new HashSet<string>(StringComparer.Ordinal);
+                ReadTags(JToken.Parse("{\"nested\":[\"Cosmetics.Test.Tag\",\"other\",{\"tag\":\"Cosmetics.Test.Tag\"}]}"), tags);
+                if (tags.Count != 1 || !tags.Contains("Cosmetics.Test.Tag")) throw new Exception("Metadata tag extraction failed.");
+                Console.WriteLine("PASS: recursive metadata tag extraction and duplicate handling.");
+                return 0;
+            }
             Console.WriteLine("Initializing existing Fortnite Porting services (no settings writes).");
             AppServices.Initialize();
             AppServices.AppSettings.Load();
@@ -41,29 +60,61 @@ internal static class Program
             Console.WriteLine("Files: " + parser.Provider?.Files.Count);
             var provider = parser.Provider;
             if (!parser.FinishedLoading || provider is null) return 1;
-            var reportRoot = args.Length > 0 ? Path.GetFullPath(args[0]) : Path.Combine(Environment.CurrentDirectory, "report");
-            var limit = args.Length > 1 ? int.Parse(args[1]) : 3;
+            var reportRoot = options.ReportRoot;
+            var limit = options.Limit;
             Directory.CreateDirectory(Path.Combine(reportRoot, "assets"));
-            if (args.Length > 2 && args[2] == "--export")
-                return await ExportSelected(reportRoot, limit);
-            var rows = new List<EmoteAudit>();
-            foreach (var path in AppServices.AppSettings.Application.FavoriteAssets)
+            var available = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var candidates = new List<string>();
+            if (options.Source == "catalog")
             {
-                if (!path.Contains("/Dances/", StringComparison.OrdinalIgnoreCase)) continue;
-                if (args.Length > 3 && args[2] == "--inspect-ids"
-                    && !new HashSet<string>(args[3].Split(','), StringComparer.OrdinalIgnoreCase)
-                        .Contains(path[(path.LastIndexOf('.') + 1)..])) continue;
-                if (rows.Count >= limit) break;
+                foreach (var data in parser.AssetRegistry)
+                    if (data.AssetClass.Text == "AthenaDanceItemDefinition" && available.Add(data.ObjectPath)) candidates.Add(data.ObjectPath);
+            }
+            else
+            {
+                foreach (var path in AppServices.AppSettings.Application.FavoriteAssets)
+                    if (path.Contains("/Dances/", StringComparison.OrdinalIgnoreCase) && available.Add(path)) candidates.Add(path);
+            }
+            if (options.Export) return await ExportSelected(reportRoot, limit, options, available);
+            if (options.Source == "catalog") candidates.Sort(StringComparer.OrdinalIgnoreCase);
+            var catalog = new List<CatalogEntry>();
+            var rows = new List<EmoteAudit>();
+            var identifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            WriteJson(Path.Combine(reportRoot, "audit-source.json"), new { Source = options.Source });
+            if (options.CatalogOnly)
+            {
+                WriteJson(Path.Combine(reportRoot, "catalog.json"), catalog);
+                WriteJson(Path.Combine(reportRoot, "catalog-info.json"), new { Source=options.Source, Available=available.Count, Attempted=0, Complete=false });
+            }
+            else WriteJson(Path.Combine(reportRoot, "audit.json"), rows);
+            foreach (var path in candidates)
+            {
+                var identifier = path[(path.LastIndexOf('.') + 1)..];
+                if (options.Ids is not null && !options.Ids.Contains(identifier)) continue;
+                if (catalog.Count >= limit) break;
+                if (!identifiers.Add(identifier)) throw new InvalidDataException("Ambiguous duplicate emote identifier: " + identifier);
                 var row = new EmoteAudit { AssetPath = path, Id = path[(path.LastIndexOf('.') + 1)..] };
-                rows.Add(row);
+                var entry = new CatalogEntry { Id = row.Id, AssetPath = path };
+                catalog.Add(entry);
                 try
                 {
                     var asset = provider.LoadPackageObject(path);
                     if (asset is null) throw new InvalidDataException("Emote asset could not be loaded.");
                     row.Name = (asset.GetOrDefault<FText?>("DisplayName")
                         ?? asset.GetOrDefault<FText?>("ItemName"))?.Text ?? row.Id;
+                    entry.Name = row.Name;
+                    var serialized = JsonConvert.SerializeObject(asset, Formatting.Indented);
+                    var properties = JObject.Parse(serialized)["Properties"];
+                    var tags = new HashSet<string>(StringComparer.Ordinal);
+                    ReadTags(properties?["DataList"], tags);
+                    ReadTags(properties?["GameplayTags"], tags);
+                    entry.Tags.AddRange(tags);
+                    entry.Tags.Sort(StringComparer.Ordinal);
+                    entry.Status = "inspected";
+                    if (options.CatalogOnly) continue;
+                    rows.Add(row);
                     row.AssetJson = Path.Combine(reportRoot, "assets", row.Id + ".json");
-                    File.WriteAllText(row.AssetJson, JsonConvert.SerializeObject(asset, Formatting.Indented));
+                    File.WriteAllText(row.AssetJson, serialized);
                     AddVariant(row, "Male Medium", asset.GetOrDefault<UAnimMontage?>("Animation")
                         ?? asset.GetOrDefault<UAnimMontage?>("FrontEndAnimation"));
                     AddVariant(row, "Female Medium", asset.GetOrDefault<UAnimMontage?>("AnimationFemaleOverride"));
@@ -90,10 +141,23 @@ internal static class Program
                 {
                     row.Status = "unresolved";
                     row.Errors.Add(error.GetType().Name + ": " + error.Message);
+                    entry.Status = "unresolved";
+                    entry.Error = error.GetType().Name + ": " + error.Message;
+                    if (!options.CatalogOnly && !rows.Contains(row)) rows.Add(row);
                 }
-                WriteJson(Path.Combine(reportRoot, "audit.json"), rows);
-                Console.WriteLine($"[{rows.Count}] {row.Id}: {row.Status}; medium variants={row.Variants.Count}");
+                finally
+                {
+                    if (options.CatalogOnly && catalog.Count % 25 == 0) WriteJson(Path.Combine(reportRoot, "catalog.json"), catalog);
+                    else if (!options.CatalogOnly) WriteJson(Path.Combine(reportRoot, "audit.json"), rows);
+                    Console.WriteLine($"[{catalog.Count}] {row.Id}: {entry.Status}");
+                }
             }
+            if (options.CatalogOnly)
+            {
+                WriteJson(Path.Combine(reportRoot, "catalog.json"), catalog);
+                WriteJson(Path.Combine(reportRoot, "catalog-info.json"), new { Source=options.Source, Available=available.Count, Attempted=catalog.Count, Complete=catalog.Count==available.Count });
+            }
+            Console.WriteLine($"Catalog source: {options.Source}; available={available.Count}; inspected={catalog.Count}.");
             return 0;
         }
         catch (Exception error)
@@ -103,23 +167,43 @@ internal static class Program
         }
     }
 
+    private static void ReadTags(JToken? value, HashSet<string> tags)
+    {
+        if (value is null) return;
+        if (value.Type == JTokenType.String)
+        {
+            var tag = (string?)value;
+            if (tag is not null && tag.StartsWith("Cosmetics.", StringComparison.Ordinal)) tags.Add(tag);
+            return;
+        }
+        foreach (var child in value.Children()) ReadTags(child, tags);
+    }
+
+    private static bool SameEvidence(Dictionary<string,string> first, Dictionary<string,string> second)
+    {
+        if (first.Count != second.Count) return false;
+        foreach (var pair in first)
+            if (!second.TryGetValue(pair.Key, out var value) || value != pair.Value) return false;
+        return true;
+    }
+
     private static void WriteJson(string path, object value)
     {
         File.WriteAllText(path + ".tmp", JsonConvert.SerializeObject(value, Formatting.Indented));
         File.Move(path + ".tmp", path, true);
     }
 
-    private static async Task<int> ExportSelected(string root, int limit)
+    private static async Task<int> ExportSelected(string root, int limit, BatchOptions options, HashSet<string> available)
     {
         var selection = JsonConvert.DeserializeObject<BatchSelection>(File.ReadAllText(Path.Combine(root, "selection.json")));
         if (selection is null || selection.SourceRevision != "8058810ece4405bfde931d97c72467b07034a881")
             throw new InvalidDataException("Selection source revision does not match this helper.");
         if (selection.AuditSha256 != HashFile(Path.Combine(root, "audit.json")))
             throw new InvalidDataException("The audit changed after classification.");
+        if (selection.Source != options.Source) throw new InvalidDataException("Selection source differs from the requested source.");
         var provider = AppServices.UEParse.Provider;
         if (provider is null) throw new InvalidOperationException("No parser provider.");
-        var favorites = new HashSet<string>(AppServices.AppSettings.Application.FavoriteAssets, StringComparer.OrdinalIgnoreCase);
-        var destination = AppServices.App.AssetsFolder.FullName;
+        var destination = options.Destination ?? AppServices.App.AssetsFolder.FullName;
         var stage = Path.Combine(root, "staging");
         Directory.CreateDirectory(stage);
         var recordsPath = Path.Combine(root, "exports.json");
@@ -127,6 +211,7 @@ internal static class Program
             ? JsonConvert.DeserializeObject<List<ExportRecord>>(File.ReadAllText(recordsPath)) ?? new List<ExportRecord>()
             : new List<ExportRecord>();
         var processed = 0;
+        var failed = 0;
         foreach (var item in selection.Items)
         {
             if (item.Status != "ready") continue;
@@ -135,7 +220,7 @@ internal static class Program
             var record = new ExportRecord { Id = item.Id, Name = item.Name };
             try
             {
-                if (!favorites.Contains(item.AssetPath)) throw new InvalidDataException("No longer favorited.");
+                if (!available.Contains(item.AssetPath)) throw new InvalidDataException("Emote is no longer available in the selected source.");
                 if (item.Variants.Count != 2) throw new InvalidDataException("A medium pair is required.");
                 if (item.AssetSha256 != HashFile(Path.Combine(root, "assets", item.Id + ".json")))
                     throw new InvalidDataException("Asset evidence changed after classification.");
@@ -148,6 +233,9 @@ internal static class Program
                 meta.AssetsRoot = stage;
                 meta.CustomPath = null;
                 meta.Settings.OpenFoldersOnExport = false;
+                meta.Settings.MeshFormat = EMeshFormat.UEFormat;
+                meta.Settings.SoundFormat = ESoundFormat.WAV;
+                meta.Settings.CompressionFormat = EFileCompressionFormat.ZSTD;
                 foreach (var variant in item.Variants)
                 {
                     var currentMontage = variant.Label switch
@@ -165,10 +253,18 @@ internal static class Program
                         throw new InvalidDataException("Animation no longer passes the prop audit.");
                     if (!new HashSet<string>(fresh.AnimationPaths, StringComparer.OrdinalIgnoreCase).SetEquals(variant.AnimationPaths))
                         throw new InvalidDataException("Animation graph changed after inspection.");
+                    if (!SameEvidence(fresh.AnimationGraphs, variant.AnimationGraphs) || !SameEvidence(fresh.SequenceEvidence, variant.SequenceEvidence)
+                        || !new HashSet<string>(fresh.NotifyTypes, StringComparer.Ordinal).SetEquals(variant.NotifyTypes)
+                        || !new HashSet<string>(fresh.NamedNotifies, StringComparer.Ordinal).SetEquals(variant.NamedNotifies))
+                        throw new InvalidDataException("Animation timing/notify evidence changed after inspection. Re-audit this selection.");
                     var export = new AnimExport(item.Name, currentMontage, [], EExportType.Animation, meta, null);
                     await export.WaitForExports();
                     if (export.Props.Count > 0) throw new InvalidDataException("Exporter discovered a prop.");
                     var context = new ExportContext(meta);
+                    if (currentMontage.Skeleton is not { } skeletonReference) throw new InvalidDataException("Missing source skeleton reference.");
+                    var skeleton = skeletonReference.Load<USkeleton>();
+                    if (skeleton is null) throw new InvalidDataException("Unresolved source skeleton.");
+                    var skeletonPath = await context.ExportAsync(skeleton, returnRealPath: true);
                     foreach (var path in variant.AnimationPaths)
                     {
                         if (provider.LoadPackageObject(path) is not UAnimSequence sequence) continue;
@@ -177,6 +273,7 @@ internal static class Program
                     await Task.WhenAll(context.ExportTasks);
                     var variantRecord = new VariantExportRecord { Label = variant.Label, Montage = variant.MontagePath };
                     record.Variants.Add(variantRecord);
+                    variantRecord.Files.Add(Publish(skeletonPath, stage, destination, "skeleton"));
                     foreach (var path in variant.AnimationPaths)
                     {
                         if (provider.LoadPackageObject(path) is not UAnimSequence sequence) continue;
@@ -198,6 +295,7 @@ internal static class Program
             catch (Exception error)
             {
                 record.Status = "failed";
+                failed++;
                 record.Error = error.GetType().Name + ": " + error.Message;
             }
             records.RemoveAll(previous => previous.Id == record.Id);
@@ -205,7 +303,8 @@ internal static class Program
             WriteJson(recordsPath, records);
             Console.WriteLine($"EXPORT [{processed}] {record.Name}: {record.Status} {record.Error}");
         }
-        return 0;
+        if (processed == 0) throw new InvalidDataException("No ready emotes selected. Review classification first.");
+        return failed == 0 ? 0 : 1;
     }
 
     private static ExportedFile Publish(string staged, string stageRoot, string destination, string kind)
@@ -213,7 +312,7 @@ internal static class Program
         var info = new FileInfo(staged);
         if (!info.Exists || info.Length < (kind == "audio" ? 44 : 16))
             throw new InvalidDataException("Export failed to produce a valid-sized " + kind + " file: " + staged);
-        if (kind == "animation")
+        if (kind == "animation" || kind == "skeleton")
         {
             using var stream = info.OpenRead();
             Span<byte> magic = stackalloc byte[8];
@@ -362,9 +461,20 @@ internal sealed class VariantAudit
 
 internal sealed class BatchSelection
 {
+    public string Source = "favorites";
     public string SourceRevision = "";
     public string AuditSha256 = "";
     public List<SelectedEmote> Items = new();
+}
+
+internal sealed class CatalogEntry
+{
+    public string Id = "";
+    public string AssetPath = "";
+    public string Name = "";
+    public string Status = "pending";
+    public string Error = "";
+    public List<string> Tags = new();
 }
 
 internal sealed class SelectedEmote

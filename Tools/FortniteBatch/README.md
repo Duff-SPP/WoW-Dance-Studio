@@ -1,4 +1,9 @@
-# Optional Fortnite favorites batch tools
+# Fortnite catalog and favorites batch tools
+
+For the interactive full-catalog workflow, open `Download Fortnite Emotes.bat`
+in the repository root and follow [the menu guide](../../docs/DOWNLOADER.md).
+The menu supports actual tag filters, name/ID search, candidate limits, audit
+review, verified export including source skeletons, and managed Studio import.
 
 These are advanced helpers for **Fortnite Porting 4.3.4**, tested against source
 revision `8058810ece4405bfde931d97c72467b07034a881`. They are separate from Studio's
@@ -12,7 +17,7 @@ this integration.
 ## C# exporter source
 
 `Program.cs` initializes the user's installed Fortnite Porting services, loads
-existing settings with saving disabled, audits favorite dance definitions and
+existing settings with saving disabled, audits selected emote definitions and
 their medium animation graphs, and optionally exports approved selections. Its
 parser may download required data into Fortnite Porting's normal cache. Run it
 only against your own configured application environment.
@@ -41,7 +46,16 @@ Once built in that environment, its command arguments are:
 BatchHelper <report-directory> <maximum-favorites>
 BatchHelper <report-directory> <maximum-favorites> --inspect-ids <comma-separated-ids>
 BatchHelper <report-directory> <maximum-favorites> --export
+BatchHelper <report-directory> <maximum> --source catalog --catalog-only
+BatchHelper <report-directory> <maximum> --source catalog --ids-file ids.json
+BatchHelper <report-directory> <maximum> --source catalog --export --destination <asset-folder>
 ```
+
+Legacy commands default to favorites. `--source catalog` enumerates all actual
+`AthenaDanceItemDefinition` registry objects using upstream's class filter.
+`--catalog-only` scans lightweight metadata/tags; `--ids-file` restricts the full
+animation audit to selected identifiers. `--help` and `--self-test` do not start
+the parser. `--destination` overrides the usual application export directory.
 
 Audit first, inspect the selection, then export. The default maximum without
 arguments is 3. Export mode rechecks saved audit hashes, definitions, and graphs,
@@ -57,11 +71,14 @@ python Tools/FortniteBatch/verify.py Reports/FortniteBatch
 python Tools/FortniteBatch/build_playback.py Reports/FortniteBatch/audit.json
 ```
 
-`classify.py` regenerates the selection from `audit.json` and the referenced
+`classify.py` accepts the actual nonzero audit count, not a fixed favorites count.
+It regenerates the selection from `audit.json` and the referenced
 definition files. Selection uses resolved male/female medium performances, music
 evidence, prop/co-op exclusions, and known behavior checks. The optional Dance tag
 is not a mandatory condition when both graphs provide verified music evidence.
-Unknown behavior stays held for review. Classification is not visual approval.
+Unknown behavior stays held for review. `--allow-non-musical` explicitly permits
+standalone non-musical body emotes while preserving the other checks.
+Classification is not visual approval.
 
 `verify.py` checks manifest identity, file sizes/hashes, UEANIM headers and WAV
 samples. `build_playback.py` creates normalized section playback plans from an

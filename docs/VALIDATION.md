@@ -41,3 +41,24 @@ The fresh-registration check did not approve the profile, run a complete new
 conversion, build a native pack, or validate gameplay. Build/harness success does
 not establish compatibility with another executable layout, missing model
 companions, changed importer versions, or the actual client/server runtime.
+
+## Full-catalog BAT downloader
+
+The menu workflow was checked against the configured Fortnite Porting 4.3.4
+provider on 24 October 2026:
+
+- Full registry scan: 2,222 `AthenaDanceItemDefinition` objects attempted; the
+  completion marker recorded the full count and actual metadata tags were listed.
+- A name filter selected Dance Monkey from that catalog, without a favorites
+  requirement. Its audited medium pair passed the default music policy.
+- Export, independent verification, and managed Studio import completed: two
+  animations, one matching source skeleton, and one soundtrack; zero verification
+  errors. A fresh Studio catalog scan indexed both variants with no missing source
+  dependencies. Those game assets/reports are local ignored outputs, not source.
+- The console menu's configure/build/exit flow and no-parser smoke test passed.
+  C# option/tag self-tests and all 65 Python regression tests passed, covering filtering,
+  variable audit counts, partial-catalog rejection, policy gates, and preserved
+  existing assets during import.
+
+This is one actual export/import example. It does not establish that every tag,
+emote, game version, model conversion, or native gameplay combination is supported.

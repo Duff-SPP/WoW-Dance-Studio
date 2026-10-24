@@ -24,17 +24,17 @@ def read_string(stream):
     return read_exact(stream, size).decode('utf-8')
 
 
-def verify_animation(path, allow_large=False):
+def verify_animation(path, allow_large=False, identifier='UEANIM'):
     with path.open('rb') as stream:
-        if read_exact(stream, 8) != b'UEFORMAT' or read_string(stream) != 'UEANIM':
-            raise ValueError('Not a UEFormat animation')
+        if read_exact(stream, 8) != b'UEFORMAT' or read_string(stream) != identifier:
+            raise ValueError('Unexpected UEFormat container type')
         version = read_exact(stream, 1)[0]
         if version != 10:
             raise ValueError(f'Unexpected container version {version}')
         name, source = read_string(stream), read_string(stream)
         if not name or not source:
             raise ValueError('Missing source identity')
-        if not allow_large and re.search(r'(?:^|[_/])CL[MF](?:[_/.]|$)', source, re.I):
+        if identifier == 'UEANIM' and not allow_large and re.search(r'(?:^|[_/])CL[MF](?:[_/.]|$)', source, re.I):
             raise ValueError('Large-body animation in export')
         compressed = read_exact(stream, 1)[0]
         if compressed != 1 or read_string(stream) != 'ZSTD':
@@ -87,6 +87,8 @@ def main():
         if {v['Label'] for v in record['Variants']} != {'Male Medium', 'Female Medium'}:
             errors.append(f'{identifier}: missing medium pair')
         for variant in record['Variants']:
+            if selection.get('Source') == 'catalog' and not any(file['Kind']=='skeleton' for file in variant['Files']):
+                errors.append(f'{identifier}: missing exported source skeleton')
             approved = next(v for v in ready[identifier]['Variants'] if v['Label'] == variant['Label'])
             if variant['Montage'] != approved['MontagePath']:
                 errors.append(f'{identifier}: unexpected montage')
@@ -106,7 +108,14 @@ def main():
                         digest = hashlib.file_digest(stream, 'sha256').hexdigest()
                     if digest != file['Sha256']:
                         raise ValueError('SHA-256 mismatch')
-                    details = verify_audio(path) if file['Kind'] == 'audio' else verify_animation(path)
+                    if file['Kind'] == 'audio':
+                        details = verify_audio(path)
+                    elif file['Kind'] == 'animation':
+                        details = verify_animation(path)
+                    elif file['Kind'] == 'skeleton':
+                        details = verify_animation(path,identifier='UEMODEL')
+                    else:
+                        raise ValueError('Unknown exported file kind')
                     if file['Kind'] == 'animation' and details['source'] not in approved['AnimationPaths']:
                         raise ValueError('Animation source was not in the approved medium graph')
                     unique_files[key] = {'path': str(path), 'kind': file['Kind'],
@@ -120,6 +129,7 @@ def main():
         'complete_emotes': len(complete), 'selected_emotes': len(ready),
         'animation_files': sum(f['kind'] == 'animation' for f in unique_files.values()),
         'audio_files': sum(f['kind'] == 'audio' for f in unique_files.values()),
+        'skeleton_files': sum(f['kind'] == 'skeleton' for f in unique_files.values()),
         'total_bytes': sum(f['bytes'] for f in unique_files.values()),
         'errors': errors, 'variants_without_audio_references': no_audio,
         'missing': missing, 'files': list(unique_files.values()),

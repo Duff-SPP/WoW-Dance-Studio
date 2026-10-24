@@ -66,6 +66,10 @@ Run `Run Tests.cmd` for the asset-free regression suite. See
 [Publishing](docs/PUBLISHING.md) for the public-package audit and upload steps.
 The [DBC guide](docs/DBC.md) lists baseline tables and exported locations.
 The optional Fortnite batch helper has its own [instructions](Tools/FortniteBatch/README.md).
+For a menu-driven full-catalog downloader, launch **Download Fortnite Emotes.bat**
+and follow the [downloader guide](docs/DOWNLOADER.md). It discovers real tags,
+audits selected body emotes, exports matching skeletons/animations/audio, and
+imports verified files into Studio using your configured Fortnite Porting setup.
 
 Original Studio code is licensed under **GPL-3.0-only**. See [LICENSE](LICENSE)
 and [third-party notices](THIRD_PARTY_NOTICES.md). The server integration patch
