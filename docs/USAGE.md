@@ -31,8 +31,9 @@ including feet, root movement, hands, and loop boundaries. Use **Mark Approved**
 only after visual review. Technical validation does not certify appearance.
 
 Keep **Use Fortnite intro / loop sections** disabled for an ordinary source-only
-setup. Its native pack path may require a separate experimental sampler DLL that
-this repository does not provide. Ordinary full-clip conversion remains available.
+setup. Its native pack path requires a separately built experimental sampler DLL;
+the source and build instructions are in `Tools/ClientIntegration`. Ordinary
+full-clip conversion remains available.
 
 ## Build a pack
 

@@ -22,6 +22,12 @@ the chosen core before application.
 
 ## External dependencies (installed separately)
 
+The dance-specific client integration patch targets the public MIT-licensed
+[Ascension Extensions Reconstruction](https://github.com/firstoni-dev/ascension-extensions-reconstruction)
+at commit `03744a1a451efc08790ddc6750b145a2a5780bb8`. Its upstream notice is
+preserved in `Tools/ClientIntegration/UPSTREAM-LICENSE.txt`. The patch package
+does not vendor that whole project, compiled client binaries, or game assets.
+
 - [Blender](https://www.blender.org/about/license/): Blender's own license applies;
   this repository does not distribute Blender or its bundled Python/libraries.
 - [Elune M2](https://elune-m2.github.io/): development used version 1.9.1; its

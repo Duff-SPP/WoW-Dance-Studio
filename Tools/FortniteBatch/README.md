@@ -17,14 +17,23 @@ their medium animation graphs, and optionally exports approved selections. Its
 parser may download required data into Fortnite Porting's normal cache. Run it
 only against your own configured application environment.
 
-This source was built as a local harness using the application's existing
-extracted libraries and a .NET 10 runtime. The original build project and matching
-dependency bundle were temporary and are not part of this checkout. Consequently
-this C# source is provided as an integration reference, **not a standalone
-rebuildable exporter**. To use it, create a host project against the exact
-application revision and its dependency graph, with this `Program` as the entry
-point, following upstream build requirements. Do not expect `dotnet run` in this
-directory to work. Normal Studio conversion does not require this harness.
+`Build.ps1` and `build-references.json` reproduce the recorded Roslyn compilation
+recipe with user-supplied directories. The list contains reference filenames, not
+the original machine's paths. Supply the exact application's extracted library
+folder, a .NET 10.0.x shared runtime directory, and an installed .NET SDK containing
+Roslyn. The recovery build was checked with SDK 9.0.305's compiler and runtime
+10.0.13 reference assemblies; runtime execution requires the matching .NET 10 host.
+
+```powershell
+.\Tools\FortniteBatch\Build.ps1 -RuntimeDirectory 'C:\dotnet\shared\Microsoft.NETCore.App\10.0.13' -LibrariesDirectory 'C:\your-tools\FortnitePorting-libraries'
+```
+
+The build writes the helper, runtime configuration, and copied external DLL
+dependencies under gitignored `Output/FortniteBatchBuild`. It does not start the
+parser, download game data, or publish dependencies. Run the built `Batch.dll`
+with a matching .NET 10 host. There is no SDK-style project for `dotnet run` in
+this folder; the documented build script is the build entry point. Normal Studio
+conversion does not require this helper.
 
 Once built in that environment, its command arguments are:
 

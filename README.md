@@ -35,11 +35,13 @@ additive animation, and ambiguous anatomy can require review or be rejected.
 Technical validation does not replace visual review or in-game testing.
 
 **Native playback requires a compatible client and server.** The release does
-not include the locally tested extended-animation client DLL. Standard clients
+not include a compiled extended-animation client DLL. The dance-specific
+[client patch source and build/test instructions](Tools/ClientIntegration/README.md)
+are included against a pinned external upstream checkout. Standard clients
 must not be assumed to handle new IDs. Read [Client compatibility](docs/CLIENT_COMPATIBILITY.md)
 before exporting. Fortnite intro/loop composition can additionally require an
-experimental native sampler DLL that is not distributed here. Keep that option
-off unless you independently provide and validate its requirements.
+experimental native sampler DLL built from those optional sources. Keep that
+option off unless you build and validate its requirements.
 
 For the tested CoA/AzerothCore integration, custom persistent dances also require
 the [server source patch](Tools/ServerIntegration/README.md). This is not a
@@ -62,6 +64,7 @@ universal patch for every core or client version.
 Run `Run Tests.cmd` for the asset-free regression suite. See
 [Contributing](CONTRIBUTING.md) for CLI commands and test limitations, and
 [Publishing](docs/PUBLISHING.md) for the public-package audit and upload steps.
+The [DBC guide](docs/DBC.md) lists baseline tables and exported locations.
 The optional Fortnite batch helper has its own [instructions](Tools/FortniteBatch/README.md).
 
 Original Studio code is licensed under **GPL-3.0-only**. See [LICENSE](LICENSE)

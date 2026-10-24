@@ -15,11 +15,13 @@ reports/handoffs, cache/output libraries, test packs, client binaries/DLLs, and
 one-off local deployment/repair scripts tied to private paths. The development
 README mixed historical experimental states; this release has a new current guide.
 
-The optional Fortnite C# favorites exporter source is retained, but its original
-temporary build project/dependency bundle is unavailable; see its README. The
-ordinary Studio batch conversion workflow is included. The experimental native
-client DLL implementation is not included: do not advertise stock-client native
-playback or turnkey intro/loop deployment.
+The Fortnite C# favorites exporter includes a portable build script/reference
+list recovered from the recorded compilation recipe. It requires separately
+supplied matching application libraries and a .NET 10 runtime; see its README.
+The client integration package includes dance-specific source patches, overlays,
+and tests against a pinned public upstream checkout. It does not include a
+compiled DLL, game executable, or universal stock-client patch. Do not advertise
+unverified gameplay compatibility.
 
 ## Before uploading
 

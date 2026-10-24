@@ -9,6 +9,8 @@
 - The Fortnite Porting **4.3.4** Blender addon/UEFormat importer, installed and
   enabled in the same Blender environment.
 - Your own compatible WoW models and exported Fortnite animation/skeleton files.
+- For optional section/montage processing, `zstandard` in the Python environment
+  running Studio's controller. See the dependency commands below.
 - For native packs: matching build-12340 WDBC baselines, a validated compatible
   client, and a server core with the necessary dance behavior.
 
@@ -54,6 +56,17 @@ For DBC packs, supply the tables required by `studio_core/dbc_schema.py`, includ
 `EmotesTextSound`, and `DanceMoves`. The DBC scan reports missing/invalid tables.
 Use one consistent baseline matching your actual client and server; no DBCs are
 downloaded or generated as substitutes for original baselines.
+See [DBC baselines and exports](DBC.md) for the full table list and requirements.
+
+For optional section/montage processing, use the selected Blender installation's
+bundled Python (or the standalone Python running your CLI controller):
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 5.2\5.2\python\bin\python.exe' -m pip install -r requirements-montage.txt
+```
+
+The standard full-clip workflow does not require `zstandard`. Installing the
+package alone does not provide saved montage graphs or the native sampler build.
 
 ## 2. Create the prepared source scene
 

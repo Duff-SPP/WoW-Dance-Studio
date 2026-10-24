@@ -1,0 +1,77 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8e5b0b6..54a9d23 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -49,6 +49,9 @@ set(ASCENSION_NATIVE_LOGON_SERVER_KEY "1a03d4c71f289f39046fad519f8af3e92b793709a
+ # AscensionRebirth/HOT_PATCH_DESIGN.md.
+ option(ASCENSION_HOT_PATCH "Interface hot-patch channel and the 0x5BC formatter check (not in the original)" OFF)
+ 
++option(ASCENSION_ANIMATION_SAFETY "Install bounded animation lookup/fallback compatibility fix" OFF)
++option(ASCENSION_DANCE_LOOP_REGIONS "Experimental verified-sampler intro-once/loop-region support" OFF)
++
+ set(UP ${CMAKE_CURRENT_SOURCE_DIR}/WotLKExtensions)
+ configure_file(${UP}/cmake/PatchConfig.hpp.in ${CMAKE_BINARY_DIR}/gen/PatchConfig.hpp)
+ 
+@@ -65,13 +68,20 @@ file(GLOB_RECURSE ASC_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/
+ add_library(Extensions SHARED ${UP_SOURCES} ${ASC_SOURCES})
+ set_target_properties(Extensions PROPERTIES OUTPUT_NAME "Extensions" PREFIX "")
+ target_include_directories(Extensions PRIVATE ${CMAKE_BINARY_DIR}/gen ${UP}/src ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
++target_compile_definitions(Extensions PRIVATE ASCENSION_ANIMATION_SAFETY=$<BOOL:${ASCENSION_ANIMATION_SAFETY}>)
++target_compile_definitions(Extensions PRIVATE ASCENSION_DANCE_LOOP_REGIONS=$<BOOL:${ASCENSION_DANCE_LOOP_REGIONS}>)
+ target_compile_definitions(Extensions PRIVATE _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN NOMINMAX)
+ 
+ if(MSVC)
+     # static CRT: the DLL must not depend on a VC redistributable on the player's box
+     set_property(TARGET Extensions PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+-    target_compile_options(Extensions PRIVATE /W3 /EHsc /Zi)
+-    target_link_options(Extensions PRIVATE /DEBUG /SAFESEH:NO)
++    if(ASCENSION_ANIMATION_SAFETY)
++        target_compile_options(Extensions PRIVATE /W3 /EHsc /Z7)
++        target_link_options(Extensions PRIVATE /DEBUG:NONE /INCREMENTAL:NO /SAFESEH:NO)
++    else()
++        target_compile_options(Extensions PRIVATE /W3 /EHsc /Zi)
++        target_link_options(Extensions PRIVATE /DEBUG /SAFESEH:NO)
++    endif()
+ endif()
+ 
+ # --- FreeType 2.14.1, as the original links it (FontRender.cpp; see AscFontRender.cpp) -------------
+diff --git a/src/Ascension/AscAnimationCount.cpp b/src/Ascension/AscAnimationCount.cpp
+index 6ef1e3d..885a59a 100644
+--- a/src/Ascension/AscAnimationCount.cpp
++++ b/src/Ascension/AscAnimationCount.cpp
+@@ -6,10 +6,19 @@
+ #include <cstdint>
+ #include <windows.h>
+ 
++namespace AscAnimationSafety { bool Install(); }
++namespace AscDanceLoops { bool Install(); }
++
+ namespace AscAnimationCount
+ {
+     void Apply()
+     {
++#if ASCENSION_ANIMATION_SAFETY
++        if (!AscAnimationSafety::Install()) return;
++#endif
++#if ASCENSION_DANCE_LOOP_REGIONS
++        AscDanceLoops::Install();
++#endif
+         static const uint32_t kSites[] = {
+             0x738E7F, 0x7176DD, 0x7177F9, 0x71E603, 0x71E63A, 0x71E653, 0x73ABC3, 0x73AC63,
+             0x73BC36, 0x73E42E, 0x73E72C, 0x73E749, 0x7486F6, 0x748763, 0x825F4F, 0x825FB1,
+diff --git a/src/Ascension/AscCrashContext.cpp b/src/Ascension/AscCrashContext.cpp
+index 6865300..ffd3ef6 100644
+--- a/src/Ascension/AscCrashContext.cpp
++++ b/src/Ascension/AscCrashContext.cpp
+@@ -285,7 +285,11 @@ namespace
+         SStrPack(text, "     Ascension Debug\r\n", 0x7FFFFFFF);
+         SStrPack(text, "----------------------------------------\r\n", 0x7FFFFFFF);
+         SStrPack(text, "\r\n", 0x7FFFFFFF);
++#if ASCENSION_ANIMATION_SAFETY
++        line("DLL Version: WDS animation-safety test (reconstruction 03744a1)");
++#else
+         line("DLL Version: 792084a2572c06bfd865feaf553c001f2bdd60fd");
++#endif
+         PROCESS_MEMORY_COUNTERS pmc = {};
+         if (K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
+             line("Process Memory Usage: " + std::to_string(static_cast<uint64_t>(pmc.WorkingSetSize >> 20)) + "MB (Peak: " +

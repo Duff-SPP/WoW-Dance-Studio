@@ -1,8 +1,11 @@
 # Native client compatibility
 
 Blender conversion and native WoW playback have separate requirements. This
-repository does not include an extended-animation client executable, DLL, or a
-rebuildable source implementation of the locally tested client modification.
+repository does not include an extended-animation client executable or compiled
+DLL. It includes the dance-specific client modifications, tests, and build
+instructions in [Tools/ClientIntegration](../Tools/ClientIntegration/README.md).
+They require the recorded external upstream checkout and the tested executable
+layout; they are not universal patches for arbitrary clients.
 
 The original tested client used a fixed native animation resolver limit of 506
 (exclusive); extended IDs caused a crash/freeze. This is evidence about that
@@ -33,8 +36,9 @@ client binaries with the source repository.
 The optional Fortnite section-based native intro/loop pack path also expects a
 locally built experimental sampler DLL at the path defined in
 `studio_core/loop_regions.py` and its explicit environment gate. That build is not
-part of this release. Keep this pack option disabled unless you provide and
-validate that separate implementation. General conversion, ordinary full clips,
+distributed as a binary. The optional implementation is included in the client
+integration overlay. Keep this pack option disabled unless you build and
+validate that implementation. General conversion, ordinary full clips,
 and Blender preview do not require that DLL.
 
 For server persistence, see `Tools/ServerIntegration/README.md`. Test each actual
