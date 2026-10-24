@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "client": "Unverified client - conservative release default",
+  "animation_id_limit_exclusive": 506,
+  "status": "Conservative bound from the original tested client. Not proof of support for any other client.",
+  "runtime_playback_verified": false
+}

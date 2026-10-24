@@ -1,0 +1,9 @@
+## Interface: 30300
+## Title: WoW Dance Studio
+## Notes: Exported dance collection, character preview and slash commands.
+## Author: WoW Dance Studio
+## Version: 0.1.0
+## SavedVariables: WoWDanceStudioDB
+Data.lua
+Core.lua
+Collection.lua
