@@ -3,7 +3,8 @@
 ## Register and review a target
 
 1. Set the WoW models folder, Fortnite emotes folder, Blender executable, and
-   prepared source scene as described in [Setup](SETUP.md).
+   source scene destination as described in [Setup](SETUP.md). Studio creates the
+   reference from your exported skeleton during Setup or Register Folder.
 2. Click **Scan Emotes** to build the local catalog. Inspect missing skeleton,
    variant, and audio diagnostics before conversion.
 3. Open **Models** and choose **Register Folder**. Pick the folder containing your
@@ -76,7 +77,7 @@ empty in this repository. Installing addon source alone does not install dances.
 | --- | --- |
 | Blender/Python not found | Run Setup with the real executable from a complete Blender installation |
 | Importer module missing | Enable both required addons in that Blender user profile; run `-CheckImporters` |
-| Reference source missing | Prepare/select the source scene with the expected armature object name |
+| Reference source missing | Use Prepare Source to choose the matching skeleton and a new scene destination |
 | Source rest pose differs | Use the skeleton export matching the reference scene and regenerate the profile |
 | Profile approval required | Review/generate/validate/approve in Models, then select that target again |
 | Missing variant or skeleton | Preserve the complete export folder and supply the matching medium performance |

@@ -213,6 +213,15 @@ $runCommand = {
         $script:jobCommand = $this.Tag
         $script:jobTarget = $script:selectedTarget
         $values = @('-u',(Join-Path $studioRoot 'studio.py'),$this.Tag)
+        if ($this.Tag -eq 'prepare-source') {
+            $picker = New-Object Windows.Forms.OpenFileDialog
+            $picker.Filter = 'Exported source skeleton (*.uemodel)|*.uemodel'
+            if (Test-Path -LiteralPath $fields.emotes.Text -PathType Container) { $picker.InitialDirectory = $fields.emotes.Text }
+            try {
+                if ($picker.ShowDialog() -ne 'OK') { return }
+                $values += '--source-skeleton'; $values += $picker.FileName
+            } finally { $picker.Dispose() }
+        }
         if ($this.Tag -like 'dbc-*') {
             if (!(& $prepareDBCCommand $this.Tag)) { return }
             $values += $script:dbcExtraArgs
@@ -250,6 +259,9 @@ $runCommand = {
         $null = $script:jobProcess.Handle
         $log.AppendText("Started $($this.Tag)...`r`n")
 }
+$prepareSource = New-Object Windows.Forms.Button
+$prepareSource.Text = 'Prepare Source'; $prepareSource.Tag = 'prepare-source'; $prepareSource.SetBounds(895,10,105,62)
+$prepareSource.Add_Click($runCommand); $form.Controls.Add($prepareSource)
 $commands = @(@('Scan Assets','assets'),@('Scan Skeletons','scan'),@('Generate Profile','profile-generate'),@('Convert Animation','convert'))
 $index = 0
 foreach ($entry in $commands) {

@@ -4,14 +4,14 @@ Windows desktop tooling for retargeting exported Fortnite body animations onto
 Wrath-era WoW character models, reviewing bone profiles, and building matching
 client/server dance packs and an in-game collection addon.
 
-**Source-only release.** Supply your own game assets, DBC baselines, Blender scene,
+**Source-only release.** Supply your own game assets, DBC baselines, exported source skeleton,
 and third-party importers. No models, textures, animations, music, DBCs, client
 executables, or compatibility DLLs are included.
 
 ## Start here
 
-1. Follow [Setup](docs/SETUP.md), including preparation of your own source scene.
-2. Run `Setup.cmd` (or `Setup.ps1` with your Blender and scene paths).
+1. Follow [Setup](docs/SETUP.md), including importer installation; source scenes are prepared automatically.
+2. Run `Setup.cmd` (or `Setup.ps1` with your Blender path).
 3. Open `Launch Studio.cmd`.
 4. Follow the [Usage guide](docs/USAGE.md) to register a model, review its profile,
    convert a dance, and build a pack.

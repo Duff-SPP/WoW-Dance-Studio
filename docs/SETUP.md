@@ -42,7 +42,7 @@ Input/
   DBC/
     ... matching original .dbc files
 Blender/
-  PreparedSource.blend     # create this yourself below
+  PreparedSource.blend     # created automatically from your skeleton
 ```
 
 Models must be flat Wrath MD20 version 264 with usable geometry and a matching
@@ -68,33 +68,31 @@ bundled Python (or the standalone Python running your CLI controller):
 The standard full-clip workflow does not require `zstandard`. Installing the
 package alone does not provide saved montage graphs or the native sampler build.
 
-## 2. Create the prepared source scene
+## 2. Automatic source preparation
 
-The original development `.blend` is intentionally absent because it contains
-game assets. A blank Blender scene is not sufficient for model registration.
+Studio creates `Blender/PreparedSource.blend` from your exported skeleton automatically.
+No manual Blender scene setup is required. Enable the importers and save Blender
+preferences first. Setup prepares the scene if exports are already available;
+otherwise **Register Folder** prepares it when you register your first model.
+The downloader's imported exports are searched alongside `Input/Fortnite`.
 
-1. Open the Blender installation you will use with Studio and enable the importers.
-2. Start a new scene and import your exported Fortnite reference `.uemodel` using
-   its UEFormat importer. Keep bone reorientation disabled and socket import
-   enabled, matching Studio's `UEModelOptions(reorient_bones=False, import_sockets=True)`.
-3. Identify the imported source armature. The GUI registration path expects the
-   object name `Fortnite_M_Avg_Player_Skeleton`. Set that exact object name if
-   needed; do not rename bones, change rest matrices, or apply transforms to
-   manufacture compatibility. CLI users may instead pass `--source-rig` with the
-   actual source object name.
-4. Save as `Blender/PreparedSource.blend`. It must retain the imported armature
-   and its original rest pose. A WoW target is not needed in this source scene:
-   normal Register Folder imports each supplied target and saves its own scene.
-5. Select this scene in Studio before Register Folder. Select the registered target
-   afterward; Studio switches to that target's generated scene/profile.
+The importer keeps bone reorientation disabled and socket import enabled. Studio
+names the source object `Fortnite_M_Avg_Player_Skeleton`, preserves the imported
+bones and rest pose, and saves a local reference scene. Existing scenes are reused
+unchanged. Each registered WoW target still receives its own generated scene.
 
-The first conversion checks actual source bones, parent links, and rest matrices.
-If they differ from the reference, use the matching source export/scene and
-regenerate the target profile. Do not bypass these checks.
+If several different skeletons exist, use **Prepare Source** in the main window
+and select the matching `.uemodel`. The Scene field must point to a new filename
+inside `Blender` or `Output` when creating a reference. To replace a reference,
+choose a new filename rather than overwriting the old scene. Advanced CLI usage:
 
-Avoid placing your first model at `Input/WoW/Human_Male/humanmale2.m2` when using
-older copies of Studio: that development path had a special baseline behavior.
-The source-only release routes all GUI/CLI registrations through normal import.
+```powershell
+python studio.py prepare-source --source-skeleton 'C:\exports\Fortnite_M_Avg_Player_Skeleton.uemodel'
+```
+
+Conversion still checks source bones, parent links, and rest matrices against the
+reference. If they differ, prepare a matching reference and register/regenerate
+the target profile. Do not bypass these checks. Game assets remain local.
 
 ## 3. Configure and check
 
@@ -111,10 +109,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 -Blender 'C:
 ```
 
 `Setup.cmd` also accepts those parameters. Setup creates local working directories,
-checks Python, optionally checks real importer modules in background Blender, and
+checks Python, optionally checks real importer modules in background Blender, prepares
+the source reference when exports are available, and
 saves `studio.local.json`. It never downloads game data or modifies a client/server.
 It installs the conservative client compatibility template only if no active
-local profile exists. Setup does not certify source-scene contents or native playback.
+local profile exists. Setup does not certify native playback.
 
 GUI and CLI defaults read `studio.local.json`; the GUI also lets you browse to
 different files. `WDS_BLENDER` overrides the configured Blender path. The Python

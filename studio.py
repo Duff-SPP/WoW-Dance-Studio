@@ -30,6 +30,10 @@ def _run(args, emit=print):
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
     reports = ROOT / 'Reports'
     reports.mkdir(exist_ok=True)
+    if args.command=='prepare-source':
+        from studio_core.source_scene import ensure_source_scene
+        result=ensure_source_scene(args.blender,args.scene,args.emotes,args.source_rig,args.source_skeleton,args.if_available,emit)
+        emit('STUDIO: '+json.dumps(result)); return
     if args.command.startswith('pack-'):
         from studio_core import pack_manager as packs
         result=packs.scan() if args.command=='pack-scan' else packs.build(json.loads(Path(args.pack_request).read_text(encoding='utf-8-sig')))
@@ -78,6 +82,9 @@ def _run(args, emit=print):
             relocate_models(rows)
             if args.model_file: rows=[r for r in rows if Path(r['path'])==Path(args.model_file).resolve()]
             if not rows: raise ValueError('No M2 files found in selected folder')
+            if any(not row.get('error') for row in rows):
+                from studio_core.source_scene import ensure_source_scene
+                ensure_source_scene(args.blender,args.scene,args.emotes,args.source_rig,getattr(args,'source_skeleton',None),emit=emit)
         else: rows=[get_model(args.target)]
         for row in rows:
             if row.get('error'): emit('STUDIO: Rejected '+row['path']+': '+row['error']); continue
@@ -275,7 +282,7 @@ def gui():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',nargs='?',default='gui',choices=['gui','assets','scan','profile','convert','catalog','library-convert','preview','approve',
+    parser.add_argument('command',nargs='?',default='gui',choices=['gui','prepare-source','assets','scan','profile','convert','catalog','library-convert','preview','approve',
             'convert-selected','convert-missing','convert-all','retry-failed','queue-start','queue-pause','queue-resume','queue-cancel','queue-status','verify-cache',
             'models-scan','models-list','model-register','profile-generate','profile-validate','profile-approve',
             'dbc-scan','dbc-ids','dbc-preview','dbc-validate','dbc-export','pack-scan','pack-build','m2-scan','m2-preview','m2-validate','m2-export'])
@@ -295,6 +302,8 @@ def main():
     parser.add_argument('--target',default='human2_male')
     parser.add_argument('--model-file')
     parser.add_argument('--source-rig',default='Fortnite_M_Avg_Player_Skeleton',help='Exact reference source armature in selected prepared scene; identity is recorded and enforced')
+    parser.add_argument('--source-skeleton',help='Explicit exported .uemodel for automatic source-scene preparation')
+    parser.add_argument('--if-available',action='store_true',help='Allow prepare-source to defer when no source export exists yet')
     parser.add_argument('--previous-profile')
     parser.add_argument('--overrides',help='Path to a JSON object of source-to-target manual mapping corrections')
     parser.add_argument('--force',action='store_true',help='Create a new version even when a verified cache hit exists')

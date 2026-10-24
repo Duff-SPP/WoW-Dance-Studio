@@ -62,3 +62,17 @@ provider on 24 October 2026:
 
 This is one actual export/import example. It does not establish that every tag,
 emote, game version, model conversion, or native gameplay combination is supported.
+
+## Automatic source preparation
+
+A fresh reference was created with Blender 5.2 from the locally exported source
+skeleton (378 bones), with no pre-existing source scene. A separate fresh
+`model-register` run created its reference automatically and registered the
+Blood Elf female model. Registration retained the expected warning about missing
+original animation companions. Re-running preparation reused the existing scene.
+No profile approval or complete conversion is claimed by this check.
+
+All 72 Python regression tests passed, including missing/ambiguous skeletons,
+identical-export deduplication, existing-scene preservation, worker failure, and
+output integrity checks. The GUI smoke test, PowerShell syntax checks, and
+public-source audit passed. Generated scenes and game files remain excluded.
