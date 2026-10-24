@@ -12,7 +12,7 @@ from Tools.FortniteBatch.verify import verify_animation
 
 class BatchDownloaderTests(unittest.TestCase):
     def temporary(self):
-        root = Path(__file__).parent/'Reports'
+        root = Path(__file__).resolve().parents[1]/'Reports'
         root.mkdir(exist_ok=True)
         context = tempfile.TemporaryDirectory(dir=root)
         self.addCleanup(context.cleanup)

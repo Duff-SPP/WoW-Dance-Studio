@@ -16,7 +16,7 @@ executables, or compatibility DLLs are included.
 4. Follow the [Usage guide](docs/USAGE.md) to register a model, review its profile,
    convert a dance, and build a pack.
 
-The development environment used **Windows, Blender 5.2, Elune M2 1.9.1, and
+Validated with **Windows, Blender 5.2, Elune M2 1.9.1, and
 Fortnite Porting 4.3.4**. The Python code needs Python 3.11+; normal GUI operation
 uses Blender's bundled Python. No mandatory pip install is needed. NumPy is an
 optional audio acceleration path.
@@ -54,22 +54,28 @@ universal patch for every core or client version.
 | `studio.py`, `studio_core/` | CLI, conversion, validation, packing, and storage |
 | `Studio*.ps1`, `Launch Studio.cmd` | Windows GUI and workflows |
 | `blender_worker.py`, `m2_worker.py`, `hd_batch_worker.py` | Blender workers |
-| `run_hd_batch.py`, `Tools/` | Advanced batch, audit, and diagnostic helpers |
+| `run_hd_batch.py`, `Tools/FortniteBatch/` | Advanced batch conversion and emote downloads |
+| `Tools/ClientIntegration/`, `Tools/ServerIntegration/` | Client and server source integration |
+| `tests/`, `Tools/Development/`, `Tools/Diagnostics/` | Regression suite, source checks, and diagnostics |
 | `Addon/WoWDanceStudio/` | Reusable addon source with an empty dance catalog |
 | `Input/`, `Blender/`, `Profiles/` | User-supplied inputs and local generated profiles |
 | `Output/`, `Reports/` | Local generated results; excluded from Git |
 
-## Development and publishing
+## Guides
 
-Run `Run Tests.cmd` for the asset-free regression suite. See
-[Contributing](CONTRIBUTING.md) for CLI commands and test limitations, and
-[Publishing](docs/PUBLISHING.md) for the public-package audit and upload steps.
 The [DBC guide](docs/DBC.md) lists baseline tables and exported locations.
 The optional Fortnite batch helper has its own [instructions](Tools/FortniteBatch/README.md).
 For a menu-driven full-catalog downloader, launch **Download Fortnite Emotes.bat**
 and follow the [downloader guide](docs/DOWNLOADER.md). It discovers real tags,
 audits selected body emotes, exports matching skeletons/animations/audio, and
 imports verified files into Studio using your configured Fortnite Porting setup.
+
+## Contributing
+
+Run `Tools/Development/Check.cmd` for the asset-free regression suite and source
+audit. See [Contributing](CONTRIBUTING.md) for developer commands,
+[Validation](docs/VALIDATION.md) for verified coverage and limits, and
+[Publishing](docs/PUBLISHING.md) for source-package release instructions.
 
 Original Studio code is licensed under **GPL-3.0-only**. See [LICENSE](LICENSE)
 and [third-party notices](THIRD_PARTY_NOTICES.md). The server integration patch

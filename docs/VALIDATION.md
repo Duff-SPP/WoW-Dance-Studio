@@ -1,9 +1,9 @@
-# Release preparation checks
+# Validation and supported environment
 
 Checked on 24 October 2026 with Windows, Blender 5.2.2 LTS, its Python 3.13.13,
 Elune M2 1.9.1, and the locally installed Fortnite Porting importer.
 
-- 58 synthetic regression tests passed without bundled game assets.
+- All 65 synthetic regression tests passed without bundled game assets.
 - Python source compilation and PowerShell syntax parsing passed.
 - Setup completed and found all required importer modules/API entry points in
   a real background Blender process.
@@ -18,11 +18,11 @@ Elune M2 1.9.1, and the locally installed Fortnite Porting importer.
   paths, and local documentation links. Generated working files are excluded
   from the archive and upload.
 
-## Recovered client and batch build sources
+## Client and batch builds
 
-A subsequent full working-folder audit found the local client modifications
-under `Output/Research` and a C# compiler recipe under `Output/Tools`. The source
-release now contains a portable patch/overlay and build instructions for these.
+The client integration package contains a patch/overlay against a pinned upstream
+checkout. The batch helper includes a portable compiler recipe with external
+dependencies supplied separately.
 
 - The client patch applied cleanly to an exported copy of upstream commit
   `03744a1a451efc08790ddc6750b145a2a5780bb8`.
@@ -31,7 +31,7 @@ release now contains a portable patch/overlay and build instructions for these.
 - A clean full x86 DLL build with both animation safety and dance-loop regions
   enabled completed using the published build script and copied overlay. Existing
   upstream conversion warnings were emitted; the build linked `Extensions.dll`.
-- The recovered C# reference list/build script compiled `Program.cs` using SDK
+- The C# reference list/build script compiled the helper using SDK
   9.0.305's Roslyn compiler and .NET 10.0.13 runtime assemblies plus separately
   supplied Fortnite Porting libraries. Compiler warning CS1701 reports an existing
   dependency's System.ObjectModel 8/10 identity assumption. No parser/export run

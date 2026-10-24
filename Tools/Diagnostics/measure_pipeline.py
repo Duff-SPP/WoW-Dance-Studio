@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from studio_core import batch,cache,models,pack_manager,m2_manager
 
@@ -15,10 +15,10 @@ from studio_core import batch,cache,models,pack_manager,m2_manager
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--label',required=True)
-    parser.add_argument('--target',default='humanfemale_4a9a8b72')
+    parser.add_argument('--target',required=True,help='Registered model ID to measure')
     args=parser.parse_args()
     if not args.label.replace('_','').replace('-','').isalnum(): parser.error('Invalid label')
-    folder=ROOT/'Reports'/'PerformanceAudit2';folder.mkdir(exist_ok=True)
+    folder=ROOT/'Reports'/'Performance';folder.mkdir(parents=True,exist_ok=True)
     result={}
 
     def measure(name,operation):

@@ -11,7 +11,7 @@ from studio_core.storage import atomic_json
 
 class ValidationSessionTests(unittest.TestCase):
     def test_catalog_snapshot_reloads_after_atomic_update(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'emotes.json'
             atomic_json(path,dict(emotes=[dict(id='first')]))
             context=cache.Context.__new__(cache.Context)
@@ -36,7 +36,7 @@ class ValidationSessionTests(unittest.TestCase):
             context.fingerprint.assert_called_once_with('selected','CMF','profile','target')
 
     def test_reuses_checks_but_rejects_changed_asset_and_registry(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             root=Path(directory)
             asset=root/'model.m2'; asset.write_bytes(b'original')
             scene=root/'model.blend'; scene.write_bytes(b'scene')

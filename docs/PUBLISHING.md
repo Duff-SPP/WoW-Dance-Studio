@@ -12,11 +12,11 @@ license texts, and current user guides.
 Excluded: original models/textures/animations/music, DBCs, the asset-containing
 prepared `.blend`, generated profiles/registries, local settings, historical
 reports/handoffs, cache/output libraries, test packs, client binaries/DLLs, and
-one-off local deployment/repair scripts tied to private paths. The development
-README mixed historical experimental states; this release has a new current guide.
+one-off local deployment/repair scripts tied to private paths. Only maintained
+application, integration, validation, and diagnostic tools belong in this package.
 
 The Fortnite C# favorites exporter includes a portable build script/reference
-list recovered from the recorded compilation recipe. It requires separately
+list based on the verified compilation recipe. It requires separately
 supplied matching application libraries and a .NET 10 runtime; see its README.
 The client integration package includes dance-specific source patches, overlays,
 and tests against a pinned public upstream checkout. It does not include a
@@ -27,7 +27,7 @@ unverified gameplay compatibility.
 
 1. Read `THIRD_PARTY_NOTICES.md` and retain `LICENSE` (GPL-3.0-only for original
    Studio code) plus the patch's upstream GPLv2-or-later notice/license.
-2. Run `Run Tests.cmd` and `python Tools/check_release.py`. The source audit checks
+2. Run `Tools/Development/Check.cmd` and `python Tools/check_release.py`. The source audit checks
    publishable files for disallowed types, personal Windows paths, obvious secret
    formats, and broken local Markdown links. It is a useful check, not a complete
    security or copyright audit.

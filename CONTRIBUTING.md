@@ -8,11 +8,11 @@ from reports.
 
 ## Tests
 
-Run `Run Tests.cmd` after Setup, or use Python 3.11+ from the repository root:
+Run `Tools/Development/Check.cmd` after Setup, or use Python 3.11+ from the repository root:
 
 ```powershell
 New-Item -ItemType Directory -Force Reports, Output, Output/FortniteImports | Out-Null
-python -m unittest discover -s . -p 'test_*.py'
+python -m unittest discover -s tests -t . -p 'test_*.py'
 python -m compileall -q studio_core Tools studio.py blender_worker.py m2_worker.py hd_batch_worker.py run_hd_batch.py
 python Tools/check_release.py
 ```

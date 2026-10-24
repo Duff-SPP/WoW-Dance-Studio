@@ -83,7 +83,7 @@ class AudioDiscoveryTests(unittest.TestCase):
         self.assertFalse(select_soundtrack(self.root,'OtherDance')[0])
 
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports')
+        self.tmp = tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports')
         self.root = Path(self.tmp.name)
 
     def tearDown(self):

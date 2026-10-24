@@ -58,7 +58,7 @@ namespace AscAnimationSafety
         AscRuntime::ReplaceFunction(0x825E00, reinterpret_cast<void*>(&Has));
         AscRuntime::ReplaceFunction(0x826350, reinterpret_cast<void*>(&ResolveNative));
         installed = true;
-        AscLog::Printf("animation-safety: bounded model lookup and uint16-safe fallback resolver installed (WDS test)");
+        AscLog::Printf("animation-safety: bounded model lookup and uint16-safe fallback resolver installed (WoW Dance Studio)");
         return true;
     }
 }

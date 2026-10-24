@@ -42,7 +42,7 @@ class MontageQueueModeTests(unittest.TestCase):
             process.returncode=0
             return process
 
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             root = Path(directory)
             jobs = [dict(id=str(i), batch='active', emote='dance'+str(i), variant='CMF', target='target',
                          profile='profile', scene='scene', blender='blender', force=False, status='Pending',

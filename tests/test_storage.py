@@ -7,7 +7,7 @@ from studio_core.storage import atomic_json
 class AtomicStorageTests(unittest.TestCase):
     def test_windows_reader_sharing_failure_is_retried(self):
         import os
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'queue.json'
             atomic_json(path,{'mode':'paused'})
             replace=os.replace
@@ -26,7 +26,7 @@ class AtomicStorageTests(unittest.TestCase):
     def test_checksum_reuse_detects_replacement_and_mutation(self):
         import hashlib
         from studio_core.storage import ContentChecks
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'asset';path.write_bytes(b'first')
             calls=[]
             def digest(file):
@@ -44,7 +44,7 @@ class AtomicStorageTests(unittest.TestCase):
 
     def test_checksum_does_not_cache_file_changed_during_hash(self):
         from studio_core.storage import ContentChecks
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'asset';path.write_bytes(b'first')
             def digest(file):
                 file.write_bytes(b'modified during read')
@@ -56,7 +56,7 @@ class AtomicStorageTests(unittest.TestCase):
 
     def test_retry_keeps_pending_work_in_active_batch(self):
         from studio_core import batch
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'queue.json'
             atomic_json(path,dict(batch='active',mode='paused',jobs=[dict(status='Pending',batch='active'),dict(status='Failed',batch='old')]))
             with patch.object(batch,'QUEUE',path):
@@ -65,7 +65,7 @@ class AtomicStorageTests(unittest.TestCase):
                 self.assertTrue(all(j['batch']=='active' for j in state['jobs']))
 
     def test_failed_replace_preserves_original(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).parent/'Reports') as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]/'Reports') as directory:
             path=Path(directory)/'queue.json'
             atomic_json(path,{'mode':'paused'})
             with patch('studio_core.storage.os.replace',side_effect=OSError('interrupted replacement')):

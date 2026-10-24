@@ -31,7 +31,7 @@ death, and optional one-shot playback. No server binary or private acceptance
 report is distributed, and the source-only package makes no universal gameplay
 compatibility claim.
 
-The optional `../server_dance_state_regression.py --core <server-checkout>` helper
+The optional `regression.py --core <server-checkout>` helper
 extracts source cases from a compatible patched checkout and compares against
 its `git show HEAD:` baseline. It requires Git and a C++20 compiler. It depends on
 the tested core's source structure and is not a general cross-core test suite.

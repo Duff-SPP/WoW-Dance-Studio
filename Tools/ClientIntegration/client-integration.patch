@@ -68,7 +68,7 @@ index 6865300..ffd3ef6 100644
          SStrPack(text, "----------------------------------------\r\n", 0x7FFFFFFF);
          SStrPack(text, "\r\n", 0x7FFFFFFF);
 +#if ASCENSION_ANIMATION_SAFETY
-+        line("DLL Version: WDS animation-safety test (reconstruction 03744a1)");
++        line("DLL Version: WoW Dance Studio animation compatibility (upstream 03744a1)");
 +#else
          line("DLL Version: 792084a2572c06bfd865feaf553c001f2bdd60fd");
 +#endif
